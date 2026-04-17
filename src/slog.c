@@ -35,7 +35,7 @@ static void slog_cleanup(void) { mtx_destroy(&g_slog_mutex); }
 
 static void slog_init(void)
 {
-    if (thrd_error == mtx_init(&g_slog_mutex, mtx_plain))
+    if (thrd_success != mtx_init(&g_slog_mutex, mtx_plain))
     {
         abort();
     }
@@ -88,14 +88,14 @@ void slog(const char* fmt, ...)
     const int ts_buf_len = 32;
     char timestamp[ts_buf_len];
 
-    if (thrd_error == mtx_lock(&g_slog_mutex))
+    if (thrd_success != mtx_lock(&g_slog_mutex))
     {
         return;
     }
     size_t remaining = SLOG_SIZE - (size_t)(g_slogpos - g_slog);
     if (remaining <= 1)
     {
-        if (thrd_error == mtx_unlock(&g_slog_mutex))
+        if (thrd_success != mtx_unlock(&g_slog_mutex))
         {
             abort();
         }
@@ -105,7 +105,7 @@ void slog(const char* fmt, ...)
     int ts_written = snprintf(g_slogpos, remaining, "[%s] ", timestamp);
     if (ts_written <= 0 || (size_t)ts_written >= remaining)
     {
-        if (thrd_error == mtx_unlock(&g_slog_mutex))
+        if (thrd_success != mtx_unlock(&g_slog_mutex))
         {
             abort();
         }
@@ -132,7 +132,7 @@ void slog(const char* fmt, ...)
         }
     }
 
-    if (thrd_error == mtx_unlock(&g_slog_mutex))
+    if (thrd_success != mtx_unlock(&g_slog_mutex))
     {
         abort();
     }
@@ -160,7 +160,7 @@ void flushlog_fp(FILE* fileptr)
         return;
     }
 
-    if (thrd_error == mtx_lock(&g_slog_mutex))
+    if (thrd_success != mtx_lock(&g_slog_mutex))
     {
         return;
     }
@@ -173,7 +173,7 @@ void flushlog_fp(FILE* fileptr)
     g_slogpos = g_slog;
     *g_slog = '\0';
 
-    if (thrd_error == mtx_unlock(&g_slog_mutex))
+    if (thrd_success != mtx_unlock(&g_slog_mutex))
     {
         abort();
     }
