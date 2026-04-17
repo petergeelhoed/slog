@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.10)
 
 project(slog C)
 
+add_compile_definitions(_POSIX_C_SOURCE=200112L)
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(Doxygen REQUIRED)
