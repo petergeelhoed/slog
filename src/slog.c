@@ -46,6 +46,24 @@ static void slog_init(void)
     }
 }
 
+/*
+ * slog_timestamp
+ *
+ * Thread-safety:
+ *   NOT thread-safe by itself.
+ *
+ * Preconditions:
+ *   - The caller MUST hold g_slog_mutex.
+ *
+ * Rationale:
+ *   - This function calls localtime(), which returns a pointer to
+ *     thread-local static storage and is not thread-safe.
+ *   - Mutual exclusion is provided by the slog mutex owned by the caller.
+ *
+ * Postconditions:
+ *   - buf is NUL-terminated on success.
+ *   - buf[0] == '\0' on failure.
+ */
 static void slog_timestamp(char* buf, size_t buflen)
 {
     struct timespec time_spec;
