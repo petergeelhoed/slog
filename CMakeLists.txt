@@ -20,7 +20,7 @@ target_include_directories(slog
 )
 
 set_target_properties(slog PROPERTIES
-    C_STANDARD 99
+    C_STANDARD 11
     C_STANDARD_REQUIRED YES
 )
 

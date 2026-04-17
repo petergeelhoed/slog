@@ -7,18 +7,18 @@
  *
  * - Logging silently truncates when the buffer is full.
  * - No dynamic memory allocation is used.
- * - Thread-safe (POSIX).
+ * - Thread-safe (C11).
  *
  * @note This file is intended to be built into a static library.
  */
 
 #include "slog.h"
 
-#include <pthread.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/time.h>
+#include <threads.h>
 #include <time.h>
 
 #ifndef SLOG_SIZE
@@ -28,7 +28,10 @@
 static char g_slog[SLOG_SIZE];
 static char* g_slogpos = g_slog;
 
-static pthread_mutex_t g_slog_mutex = PTHREAD_MUTEX_INITIALIZER;
+static mtx_t g_slog_mutex;
+static once_flag g_slog_once = ONCE_FLAG_INIT;
+
+static void slog_init(void) { (void)mtx_init(&g_slog_mutex, mtx_plain); }
 
 static void slog_timestamp(char* buf, size_t buflen)
 {
@@ -55,16 +58,17 @@ static void slog_timestamp(char* buf, size_t buflen)
 
 void slog(const char* fmt, ...)
 {
+    call_once(&g_slog_once, slog_init);
     va_list aplist;
     const int ts_buf_len = 32;
     char timestamp[ts_buf_len];
 
-    pthread_mutex_lock(&g_slog_mutex);
+    (void)mtx_lock(&g_slog_mutex);
 
     size_t remaining = SLOG_SIZE - (size_t)(g_slogpos - g_slog);
     if (remaining <= 1)
     {
-        pthread_mutex_unlock(&g_slog_mutex);
+        (void)mtx_unlock(&g_slog_mutex);
         return;
     }
 
@@ -72,7 +76,7 @@ void slog(const char* fmt, ...)
     int ts_written = snprintf(g_slogpos, remaining, "[%s] ", timestamp);
     if (ts_written <= 0 || (size_t)ts_written >= remaining)
     {
-        pthread_mutex_unlock(&g_slog_mutex);
+        (void)mtx_unlock(&g_slog_mutex);
         return;
     }
 
@@ -96,7 +100,7 @@ void slog(const char* fmt, ...)
         }
     }
 
-    pthread_mutex_unlock(&g_slog_mutex);
+    (void)mtx_unlock(&g_slog_mutex);
 }
 
 void flushlog(void) { flushlog_fp(stdout); }
@@ -121,7 +125,7 @@ void flushlog_fp(FILE* fileptr)
         return;
     }
 
-    pthread_mutex_lock(&g_slog_mutex);
+    (void)mtx_lock(&g_slog_mutex);
 
     size_t len = (size_t)(g_slogpos - g_slog);
     (void)fwrite(g_slog, 1, len, fileptr);
@@ -131,5 +135,5 @@ void flushlog_fp(FILE* fileptr)
     g_slogpos = g_slog;
     *g_slog = '\0';
 
-    pthread_mutex_unlock(&g_slog_mutex);
+    (void)mtx_unlock(&g_slog_mutex);
 }
