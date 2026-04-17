@@ -31,9 +31,16 @@ static char* g_slogpos = g_slog;
 static mtx_t g_slog_mutex;
 static once_flag g_slog_once = ONCE_FLAG_INIT;
 
+static void slog_cleanup(void) { mtx_destroy(&g_slog_mutex); }
+
 static void slog_init(void)
 {
     if (thrd_error == mtx_init(&g_slog_mutex, mtx_plain))
+    {
+        abort();
+    }
+
+    if (atexit(slog_cleanup) != 0)
     {
         abort();
     }
