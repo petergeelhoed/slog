@@ -16,6 +16,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <threads.h>
 #include <time.h>
@@ -30,7 +31,13 @@ static char* g_slogpos = g_slog;
 static mtx_t g_slog_mutex;
 static once_flag g_slog_once = ONCE_FLAG_INIT;
 
-static void slog_init(void) { (void)mtx_init(&g_slog_mutex, mtx_plain); }
+static void slog_init(void)
+{
+    if (thrd_error == mtx_init(&g_slog_mutex, mtx_plain))
+    {
+        abort();
+    }
+}
 
 static void slog_timestamp(char* buf, size_t buflen)
 {
@@ -74,20 +81,27 @@ void slog(const char* fmt, ...)
     const int ts_buf_len = 32;
     char timestamp[ts_buf_len];
 
-    (void)mtx_lock(&g_slog_mutex);
-
+    if (thrd_error == mtx_lock(&g_slog_mutex))
+    {
+        return;
+    }
     size_t remaining = SLOG_SIZE - (size_t)(g_slogpos - g_slog);
     if (remaining <= 1)
     {
-        (void)mtx_unlock(&g_slog_mutex);
+        if (thrd_error == mtx_unlock(&g_slog_mutex))
+        {
+            abort();
+        }
         return;
     }
-
     slog_timestamp(timestamp, ts_buf_len);
     int ts_written = snprintf(g_slogpos, remaining, "[%s] ", timestamp);
     if (ts_written <= 0 || (size_t)ts_written >= remaining)
     {
-        (void)mtx_unlock(&g_slog_mutex);
+        if (thrd_error == mtx_unlock(&g_slog_mutex))
+        {
+            abort();
+        }
         return;
     }
 
@@ -111,7 +125,10 @@ void slog(const char* fmt, ...)
         }
     }
 
-    (void)mtx_unlock(&g_slog_mutex);
+    if (thrd_error == mtx_unlock(&g_slog_mutex))
+    {
+        abort();
+    }
 }
 
 void flushlog(void) { flushlog_fp(stdout); }
@@ -136,7 +153,10 @@ void flushlog_fp(FILE* fileptr)
         return;
     }
 
-    (void)mtx_lock(&g_slog_mutex);
+    if (thrd_error == mtx_lock(&g_slog_mutex))
+    {
+        return;
+    }
 
     size_t len = (size_t)(g_slogpos - g_slog);
     (void)fwrite(g_slog, 1, len, fileptr);
@@ -146,5 +166,8 @@ void flushlog_fp(FILE* fileptr)
     g_slogpos = g_slog;
     *g_slog = '\0';
 
-    (void)mtx_unlock(&g_slog_mutex);
+    if (thrd_error == mtx_unlock(&g_slog_mutex))
+    {
+        abort();
+    }
 }
