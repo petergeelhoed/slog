@@ -25,6 +25,14 @@
 #define SLOG_SIZE 4096
 #endif
 
+enum
+{
+    SLOG_TS_BUF_LEN = 32, /* YYYY-MM-DDTHH:MM:SS.mmm\0 */
+    SLOG_MS_PER_SEC = 1000L,
+    SLOG_NS_PER_MS = 1000000L,
+    SLOG_YEAR_OFFSET = 1900,
+};
+
 static char g_slog[SLOG_SIZE];
 static char* g_slogpos = g_slog;
 
@@ -84,26 +92,24 @@ static void slog_timestamp(char* buf, size_t buflen)
     }
     time = *tmp; /* copy immediately */
 
-    // NOLINTBEGIN(readability-magic-numbers)
     /* YYYY-MM-DDTHH:MM:SS.mmm */
     (void)snprintf(buf,
                    buflen,
                    "%04d-%02d-%02dT%02d:%02d:%02d.%03ld",
-                   time.tm_year + 1900,
+                   time.tm_year + SLOG_YEAR_OFFSET,
                    time.tm_mon + 1,
                    time.tm_mday,
                    time.tm_hour,
                    time.tm_min,
                    time.tm_sec,
-                   time_spec.tv_nsec / 1000000L);
-    // NOLINTEND(readability-magic-numbers)
+                   time_spec.tv_nsec / SLOG_NS_PER_MS);
 }
 
 void slog(const char* fmt, ...)
 {
     call_once(&g_slog_once, slog_init);
     va_list aplist;
-    const int ts_buf_len = 32;
+    const int ts_buf_len = SLOG_TS_BUF_LEN;
     char timestamp[ts_buf_len];
 
     if (thrd_success != mtx_lock(&g_slog_mutex))
