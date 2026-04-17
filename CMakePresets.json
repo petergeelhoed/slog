@@ -163,7 +163,7 @@
   },
   {
     "name": "release-all",
-    "displayName": "Release: build + install + doxygen (gcc)",
+    "displayName": "Release: build + doxygen (gcc)",
     "steps": [
       { "type": "configure", "name": "release" },
       { "type": "build",     "name": "release" },
