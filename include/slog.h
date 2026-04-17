@@ -1,4 +1,5 @@
 #pragma once
+#include <stdio.h>
 
 /**
  * @file slog.h
@@ -26,12 +27,38 @@ void slog(const char* fmt, ...);
 /**
  * @brief Flush the log buffer to stdout.
  *
- * Writes the entire contents of the internal buffer to stdout using
- * printf(), then resets the buffer to empty.
+ * Writes the entire contents of the internal buffer to stdout, then
+ * resets the buffer to empty.
  *
- * After calling this function, logging starts again from the beginning
- * of the buffer.
+ * Any I/O errors encountered during flushing are reported to stderr.
  *
  * @note Thread-safe.
  */
 void flushlog(void);
+
+/**
+ * @brief Flush the log buffer to a FILE stream.
+ *
+ * The caller retains ownership of @p fileptr; this function does not
+ * close the stream.
+ *
+ * Any I/O errors encountered during flushing are reported to stderr.
+ *
+ * @param fileptr Open FILE stream to write to.
+ *
+ * @note Thread-safe.
+ */
+void flushlog_fp(FILE* fileptr);
+
+/**
+ * @brief Flush the log buffer to a file path.
+ *
+ * Opens the file in append mode, flushes the buffer, and closes the file.
+ *
+ * Any I/O errors encountered during flushing are reported to stderr.
+ *
+ * @param file Path to the log file.
+ *
+ * @note Thread-safe.
+ */
+void flushlog_file(const char* file);

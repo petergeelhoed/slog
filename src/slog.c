@@ -17,6 +17,7 @@
 #include <pthread.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
 
 #ifndef SLOG_SIZE
 #define SLOG_SIZE 4096
@@ -60,14 +61,37 @@ void slog(const char* fmt, ...)
     pthread_mutex_unlock(&g_slog_mutex);
 }
 
-void flushlog(void)
+void flushlog(void) { flushlog_fp(stdout); }
+
+void flushlog_file(const char* file)
 {
+    FILE* fileptr = fopen(file, "a");
+    if (!fileptr)
+    {
+        return;
+    }
+
+    flushlog_fp(fileptr);
+
+    (void)fclose(fileptr);
+}
+
+void flushlog_fp(FILE* fileptr)
+{
+    if (!fileptr)
+    {
+        return;
+    }
+
     pthread_mutex_lock(&g_slog_mutex);
 
-    printf("%s", g_slog);
+    size_t len = (size_t)(g_slogpos - g_slog);
+    (void)fwrite(g_slog, 1, len, fileptr);
+    (void)fflush(fileptr);
 
+    /* reset buffer */
     g_slogpos = g_slog;
-    *g_slog = 0;
+    *g_slog = '\0';
 
     pthread_mutex_unlock(&g_slog_mutex);
 }
