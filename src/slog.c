@@ -17,7 +17,6 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/time.h>
 #include <threads.h>
 #include <time.h>
 
@@ -35,14 +34,26 @@ static void slog_init(void) { (void)mtx_init(&g_slog_mutex, mtx_plain); }
 
 static void slog_timestamp(char* buf, size_t buflen)
 {
-    struct timeval time_val;
+    struct timespec time_spec;
     struct tm time;
 
-    gettimeofday(&time_val, NULL);
-    localtime_r(&time_val.tv_sec, &time);
+    if (timespec_get(&time_spec, TIME_UTC) != TIME_UTC)
+    {
+        buf[0] = '\0';
+        return;
+    }
+
+    /* localtime() is NOT thread-safe → protected by slog mutex */
+    struct tm* tmp = localtime(&time_spec.tv_sec);
+    if (tmp == NULL)
+    {
+        buf[0] = '\0';
+        return;
+    }
+    time = *tmp; /* copy immediately */
 
     // NOLINTBEGIN(readability-magic-numbers)
-    /* YYYY-MM-DD HH:MM:SS.mmm */
+    /* YYYY-MM-DDTHH:MM:SS.mmm */
     (void)snprintf(buf,
                    buflen,
                    "%04d-%02d-%02dT%02d:%02d:%02d.%03ld",
@@ -52,7 +63,7 @@ static void slog_timestamp(char* buf, size_t buflen)
                    time.tm_hour,
                    time.tm_min,
                    time.tm_sec,
-                   time_val.tv_usec / 1000);
+                   time_spec.tv_nsec / 1000000L);
     // NOLINTEND(readability-magic-numbers)
 }
 
