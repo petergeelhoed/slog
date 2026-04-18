@@ -10,4 +10,9 @@ int main()
     puts("mid");
     slog("e  %f\n", euler);
     flushlog();
+    slog("hello world!");
+    flushlog_fp(stdout);
+
+    slog("/tmp/slog.log\n");
+    flushlog_file("/tmp/slog.log");
 }
