@@ -34,6 +34,22 @@
         "CMAKE_BUILD_TYPE": "Release"
       },
       "binaryDir": "${sourceDir}/build/release"
+    },
+    {
+      "name": "remote-debug",
+      "displayName": "Debug configure (Remote SSH)",
+      "inherits": "base-config",
+      "binaryDir": "${sourceDir}/build/remote-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      },
+      "environment": {
+        "CMAKE_SSH_CONNECTION": "pi@192.168.1.131"
+      },
+      "remote": {
+        "remoteMachineName": "pi@192.168.1.131",
+        "remotePath": "/home/pi/slog"
+      }
     }
   ],
 
@@ -77,6 +93,12 @@
       "inherits": "base-build",
       "configurePreset": "debug",
       "targets": ["clang-format-check"]
+    },
+    {
+      "name": "remote-debug",
+      "displayName": "Build Debug (Remote SSH)",
+      "inherits": "base-build",
+      "configurePreset": "remote-debug"
     }
 ],
 
@@ -105,6 +127,12 @@
       "displayName": "Run CTest (Release, all tests)",
       "inherits": "base-test",
       "configurePreset": "release"
+    },
+    {
+      "name": "remote-debug_ctest",
+      "displayName": "Run CTest (Remote Debug, all tests)",
+      "inherits": "base-test",
+      "configurePreset": "remote-debug"
     }
   ],
   "workflowPresets": [
@@ -168,6 +196,15 @@
       { "type": "configure", "name": "release" },
       { "type": "build",     "name": "release" },
       { "type": "build",     "name": "release-doxygen" }
+    ]
+  },
+  {
+    "name": "remote-debug",
+    "displayName": "Remote Debug: configure + build + test (SSH)",
+    "steps": [
+      { "type": "configure", "name": "remote-debug" },
+      { "type": "build",     "name": "remote-debug" },
+      { "type": "test",      "name": "remote-debug_ctest" }
     ]
   }
 ]
