@@ -177,6 +177,22 @@ void flushlog_file(const char* file)
     (void)fclose(fileptr);
 }
 
+void droplog(void)
+{
+    if (thrd_success != mtx_lock(&g_slog_mutex))
+    {
+        return;
+    }
+
+    g_slogpos = g_slog;
+    *g_slog = '\0';
+
+    if (thrd_success != mtx_unlock(&g_slog_mutex))
+    {
+        abort();
+    }
+}
+
 void flushlog_fp(FILE* fileptr)
 {
     if (!fileptr)

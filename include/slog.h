@@ -37,6 +37,15 @@ void slog(const char* fmt, ...);
 void flushlog(void);
 
 /**
+ * @brief Drop the log buffer.
+ *
+ * Resets the log buffer to the start, and drops all logged messages.
+ *
+ * @note Thread-safe.
+ */
+void droplog(void);
+
+/**
  * @brief Flush the log buffer to a FILE stream.
  *
  * The caller retains ownership of @p fileptr; this function does not

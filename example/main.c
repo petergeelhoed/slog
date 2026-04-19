@@ -15,4 +15,8 @@ int main()
 
     slog("/tmp/slog.log\n");
     flushlog_file("/tmp/slog.log");
+
+    slog("not logged\n");
+    droplog();
+    flushlog();
 }
