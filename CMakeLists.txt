@@ -10,6 +10,8 @@ find_package(Doxygen REQUIRED)
 
 include(cmake/ClangTools.cmake)
 
+enable_testing()
+
 add_library(slog STATIC
     src/slog.c
 )
@@ -44,6 +46,8 @@ add_custom_target(install_all
 
 
 add_subdirectory(example)
+
+add_subdirectory(test)
 
 
 add_custom_target(doxygen
