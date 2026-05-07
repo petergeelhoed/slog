@@ -52,6 +52,11 @@ static void slog_init(void)
     {
         abort();
     }
+    // Register flushlog to ensure logs are flushed at normal exit
+    if (atexit(flushlog) != 0)
+    {
+        abort();
+    }
 }
 
 /*
